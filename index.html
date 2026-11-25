@@ -165,6 +165,10 @@ h1.big .thin{font-weight:300;color:var(--accent)}
 #hero .sub{margin-top:26px;color:var(--muted);font-size:1.06rem;max-width:34em}
 #hero .ctas{margin-top:38px;display:flex;gap:16px;flex-wrap:wrap}
 .btn{display:inline-block;padding:15px 34px;border-radius:3px;font-size:.95rem;letter-spacing:.14em;text-decoration:none;cursor:pointer;border:1px solid transparent;transition:all .35s;font-family:inherit}
+/* 方案区：点击后原地回应，视口不动 */
+.planbtn{width:100%}
+.plannote{margin-top:14px;font-size:.82rem;line-height:1.6;color:#c9463d;letter-spacing:.1em;min-height:1.6em;opacity:0;transition:opacity .7s}
+.plannote.on{opacity:1}
 .btn.primary{background:var(--accent);color:#fff}
 .btn.primary:hover{background:var(--accent-deep);transform:translateY(-2px)}
 .btn.ghost{border-color:var(--line);color:var(--ink);background:transparent}
@@ -676,7 +680,8 @@ body[data-stage="4"] .shiver{animation:shiver 3.4s infinite}
           <li data-corrupt>每周外围巡逻</li>
           <li data-corrupt>降水提醒（黑伞已就位）</li>
         </ul>
-        <a class="btn ghost" href="#door" data-nav data-corrupt>了解详情</a>
+        <button type="button" class="btn ghost planbtn" data-r1="详情就是您现在的生活。" data-r2="您正在了解它。" data-corrupt>了解详情</button>
+        <p class="plannote" aria-live="polite"></p>
       </div>
       <div class="plan hot">
         <div class="tagline" data-corrupt>当前方案 · 正在生效</div>
@@ -691,7 +696,8 @@ body[data-stage="4"] .shiver{animation:shiver 3.4s infinite}
           <li data-corrupt>您的保镖生涯退休计划（工资照发）</li>
           <li data-corrupt>夜间值守至天亮（自愿加班）</li>
         </ul>
-        <a class="btn primary" href="#door" data-nav data-corrupt>已生效 · 无需操作</a>
+        <button type="button" class="btn primary planbtn" data-r1="已收到。您什么都不必做。——一直都是。" data-r2="无需再确认。我们会替您确认。" data-corrupt>已生效 · 无需操作</button>
+        <p class="plannote" aria-live="polite"></p>
       </div>
       <div class="plan">
         <h3 data-corrupt>王座</h3>
@@ -703,7 +709,8 @@ body[data-stage="4"] .shiver{animation:shiver 3.4s infinite}
           <li data-corrupt>您已经在其中。</li>
           <li data-corrupt>您一直都在其中。</li>
         </ul>
-        <a class="btn ghost" style="opacity:.4;pointer-events:none" data-corrupt>无需选择</a>
+        <button type="button" class="btn ghost planbtn" style="opacity:.55" data-r1="您没有选择它。它选择了您。" data-r2="您还是没有选择。谢谢。" data-corrupt>无需选择</button>
+        <p class="plannote" aria-live="polite"></p>
       </div>
     </div>
     <div class="sliderbox">
@@ -1495,6 +1502,20 @@ setInterval(function(){
 /* ---------- init ---------- */
 collectCorrupt();
 window.addEventListener("resize", collectCorrupt);
+
+/* ---------- 方案区：不跳转，只回应 ---------- */
+$$(".planbtn").forEach(function(b){
+  var note = b.parentNode.querySelector(".plannote");
+  if (!note) return;
+  var clicks = 0;
+  b.addEventListener("click", function(){
+    clicks++;
+    var line = clicks===1? (b.dataset.r1||"") : (b.dataset.r2||b.dataset.r1||"");
+    if (!line) return;
+    note.classList.remove("on");
+    setTimeout(function(){ note.textContent = line; note.classList.add("on"); }, 160);
+  });
+});
 
 /* ---------- 访客须知 ---------- */
 var gate = $("#gate");
