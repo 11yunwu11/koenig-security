@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KSG 柯尼希安保 — 真正的安全</title>
+<meta name="description" content="KÖNIG SICHERHEITSDIENST — 苏黎世私人安防工作室。我们只守护一件事：你。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M14 40a10 10 0 0 1 2-19 14 14 0 0 1 27-4 11 11 0 0 1 7 19z' fill='%230e5aa7'/%3E%3Cpath d='M22 40l4-10 6 6 6-8 4 12z' fill='%23d9a13a'/%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   KÖNIG SICHERHEITSDIENST — 访客编号：001
+   本文件没有注释。它不需要被任何人读懂。
+   ============================================================ */
+:root{
+  --bg:#f6f8fa;
+  --bg2:#eef2f6;
+  --paper:#ffffff;
+  --ink:#0b1b2b;
+  --muted:#5b6b7b;
+  --line:#dde5ec;
+  --accent:#0e5aa7;
+  --accent-deep:#0a3f77;
+  --gold:#c9962e;
+  --dark:#0a0d12;
+  --blood:#7a0e12;
+  --bone:#e8e2d6;
+  --corr:0;
+  --stage:0;
+  --grain-op:0;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  line-height:1.7;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  transition:background 1.6s ease, color 1.6s ease;
+}
+::selection{background:var(--accent);color:#fff}
+.mono{font-family:Consolas,"Courier New",monospace}
+.serif{font-family:Georgia,"Times New Roman","Songti SC","SimSun",serif}
+.wrap{max-width:1120px;margin:0 auto;padding:0 32px}
+section{position:relative}
+
+/* ---------- fixed overlays ---------- */
+#grain{position:fixed;inset:0;pointer-events:none;z-index:9000;opacity:var(--grain-op);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  mix-blend-mode:overlay;}
+#scanlines{position:fixed;inset:0;pointer-events:none;z-index:9001;opacity:0;transition:opacity 2s;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);}
+#vignette{position:fixed;inset:0;pointer-events:none;z-index:8999;opacity:0;transition:opacity 2.5s;
+  background:radial-gradient(ellipse at 50% 45%,transparent 40%,rgba(0,0,0,.55) 82%,rgba(0,0,0,.92) 100%);}
+body[data-stage="3"] #vignette{opacity:.35}
+body[data-stage="4"] #vignette{opacity:.7}
+body[data-stage="5"] #vignette{opacity:.9}
+body[data-stage="3"] #scanlines{opacity:.25}
+body[data-stage="4"] #scanlines{opacity:.4}
+body[data-stage="5"] #scanlines{opacity:.5}
+body[data-stage="3"] #grain{--grain-op:.5}
+body[data-stage="4"] #grain{--grain-op:.75}
+body[data-stage="5"] #grain{--grain-op:.9}
+
+#flash{position:fixed;inset:0;z-index:9500;background:#050505;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none}
+#flash svg{width:min(52vw,420px);filter:drop-shadow(0 0 40px rgba(20,80,160,.35))}
+#flash.on{animation:flashAnim 140ms steps(2) forwards}
+@keyframes flashAnim{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
+
+#fade{position:fixed;inset:0;z-index:9600;background:#020202;opacity:0;pointer-events:none;transition:opacity 3.2s ease}
+#fade.on{opacity:1;pointer-events:auto}
+#fade .final{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.1rem;padding:40px;opacity:0;transition:opacity 1.4s ease}
+#fade.on .final{opacity:1}
+#fade .final p{color:#b9aca4;font-size:clamp(1.05rem,2.4vw,1.5rem);letter-spacing:.14em;min-height:1.6em;text-align:center}
+
+#whisper{position:fixed;z-index:9400;pointer-events:none;color:#c9463d;font-size:.82rem;letter-spacing:.35em;opacity:0;transition:opacity .8s;text-shadow:0 0 12px rgba(160,20,20,.8)}
+#whisper.on{opacity:.9}
+
+/* ---------- 访客须知（内容警告门） ---------- */
+#gate{position:fixed;inset:0;z-index:9800;background:#050507;display:flex;align-items:center;justify-content:center;padding:24px;transition:opacity 1.2s ease}
+#gate.off{opacity:0;pointer-events:none}
+body.gated{overflow:hidden;height:100vh}
+.gatecard{max-width:580px;color:#b9aca4;border:1px solid #2a2024;background:#0b090c;padding:44px 46px;border-radius:6px;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+.gatecard .warn{color:#c9463d;font-size:2rem;line-height:1;margin-bottom:14px}
+.gatecard h2{color:#e8ddd6;font-size:1.15rem;letter-spacing:.3em;margin-bottom:20px}
+.gatecard p{font-size:.92rem;margin-bottom:14px;line-height:1.8}
+.gatecard .meta{font-family:Consolas,"Courier New",monospace;font-size:.74rem;color:#6a564c;letter-spacing:.15em}
+.gatebtns{display:flex;gap:14px;margin-top:26px}
+.gatebtns button{font-family:inherit;font-size:.9rem;letter-spacing:.15em;padding:12px 26px;border-radius:3px;cursor:pointer;border:1px solid #4d2024;background:#1a0b0d;color:#d8b8b4;transition:all .4s}
+.gatebtns button:hover{background:#2a1013;border-color:#8a3030}
+.gatebtns #gateEnter{background:#7a0e12;border-color:#7a0e12;color:#f5e8e6}
+.gatebtns #gateEnter:hover{background:#9a1216}
+#gateSay{margin-top:18px;color:#c9463d;letter-spacing:.12em;min-height:1.4em}
+
+/* ---------- 第二层恐惧 ---------- */
+/* 红点。从现在起，被追踪的是光标本身。 */
+#tracker{position:fixed;left:0;top:0;z-index:9450;pointer-events:none;opacity:0;transition:opacity 1.4s;will-change:transform}
+#tracker .dot{width:8px;height:8px;border-radius:50%;background:#e0392e;box-shadow:0 0 10px rgba(230,50,40,.95),0 0 34px rgba(230,50,40,.45);margin:-4px 0 0 -4px}
+#tracker .ring{position:absolute;left:-15px;top:-15px;width:30px;height:30px;border:1px solid rgba(224,57,46,.55);border-radius:50%;animation:ringpulse 2.2s infinite}
+#tracker .tag{position:absolute;left:18px;top:12px;font-size:.58rem;letter-spacing:.18em;color:#e0392e;white-space:nowrap;font-family:Consolas,"Courier New",monospace;text-shadow:0 0 8px rgba(200,30,30,.7)}
+@keyframes ringpulse{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.4);opacity:.2}}
+body.tracked, body.tracked a, body.tracked button, body.tracked input{cursor:none}
+body.tracked #tracker{opacity:1}
+
+/* 第7通道：不该存在的画面 */
+.feed .voice{position:absolute;bottom:24px;right:10px;z-index:3;font-size:.6rem;letter-spacing:.08em;color:#a9574e;max-width:82%;text-align:right}
+.feed07{display:none}
+body[data-stage="5"] .feed07{display:block}
+
+/* 近距离闪帧 */
+#flash .figclose{display:none}
+#flash.close{background:radial-gradient(circle at 50% 42%,#2b0507 0%,#050101 75%)}
+#flash.close .figfar{display:none}
+#flash.close .figclose{display:block}
+#flash.close svg.figclose{width:min(86vw,780px);filter:drop-shadow(0 0 60px rgba(180,20,20,.5))}
+
+/* 客服正在输入 */
+#chat .panel .msg.typing{color:#8a6f66;font-style:italic}
+
+/* ---------- nav ---------- */
+nav{position:fixed;top:0;left:0;right:0;z-index:8000;background:rgba(255,255,255,.86);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);transition:background 1.6s,border-color 1.6s}
+nav .bar{max-width:1180px;margin:0 auto;padding:14px 32px;display:flex;align-items:center;gap:36px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.06em;color:var(--ink);font-size:1.02rem;cursor:pointer;user-select:none}
+.logo svg{width:30px;height:30px;flex:none}
+.logo .de{font-size:.66rem;color:var(--muted);letter-spacing:.28em;display:block;font-weight:600}
+nav .links{display:flex;gap:26px;margin-left:auto;align-items:center}
+nav a.nl{color:var(--muted);text-decoration:none;font-size:.88rem;letter-spacing:.08em;transition:color .4s}
+nav a.nl:hover{color:var(--accent)}
+.navcta{background:var(--accent);color:#fff !important;padding:9px 20px;border-radius:3px;font-size:.85rem;letter-spacing:.12em}
+.navcta:hover{background:var(--accent-deep)}
+body[data-stage="2"] nav{background:rgba(16,20,26,.88)}
+body[data-stage="2"] nav .bar{color:#d7dde3}
+body[data-stage="2"] nav a.nl{color:#98a3ad}
+body[data-stage="2"] .logo{color:#e8edf2}
+/* 从第3阶段起，公司的皮肤开始腐烂，且不再恢复 —— 上下滚动不构成离开 */
+body.ruined nav{background:rgba(8,6,7,.94);border-color:#241213}
+body.ruined nav a.nl{color:#7a625c}
+body.ruined nav a.nl:hover{color:#c9463d}
+body.ruined .logo{color:#d8c5bd}
+body.ruined .logo .de{color:#6a564c}
+body.ruined #logoCloud{fill:#4d2024 !important}
+body.ruined #logoCrown{fill:#8a3030 !important}
+body.ruined .navcta{background:#8a3030}
+body.ruined .navcta:hover{background:#a83a34}
+body.ruined #ticker{background:#030204;color:#7e2a26}
+
+/* ---------- ticker ---------- */
+#ticker{position:fixed;top:62px;left:0;right:0;z-index:7999;background:var(--accent-deep);color:#cfe2f5;font-size:.72rem;letter-spacing:.22em;
+  padding:5px 0;overflow:hidden;white-space:nowrap;transition:background 1.6s,color 1.6s}
+#ticker .in{display:inline-block;animation:tick 36s linear infinite}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+body[data-stage="2"] #ticker{background:#17070a;color:#a9574e}
+body[data-stage="4"] #ticker{background:#050203;color:#7e2a26}
+#ticker .sep{margin:0 18px;opacity:.4}
+
+/* ---------- hero ---------- */
+#hero{min-height:100vh;display:flex;align-items:center;padding-top:120px;background:
+  linear-gradient(180deg,#f6f8fa 0%,#eef3f8 55%,#e7eef5 100%);overflow:hidden;transition:background 1.6s}
+#hero .wrap{display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center;width:100%}
+.eyebrow{color:var(--accent);letter-spacing:.42em;font-size:.78rem;font-weight:700;text-transform:uppercase;margin-bottom:26px}
+h1.big{font-size:clamp(2.4rem,5.4vw,4.3rem);line-height:1.18;font-weight:800;letter-spacing:.01em}
+h1.big .thin{font-weight:300;color:var(--accent)}
+#hero .sub{margin-top:26px;color:var(--muted);font-size:1.06rem;max-width:34em}
+#hero .ctas{margin-top:38px;display:flex;gap:16px;flex-wrap:wrap}
+.btn{display:inline-block;padding:15px 34px;border-radius:3px;font-size:.95rem;letter-spacing:.14em;text-decoration:none;cursor:pointer;border:1px solid transparent;transition:all .35s;font-family:inherit}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-deep);transform:translateY(-2px)}
+.btn.ghost{border-color:var(--line);color:var(--ink);background:transparent}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+#hero .art{position:relative;display:flex;justify-content:center}
+#hero .art svg{width:100%;max-width:460px}
+.trust{display:flex;gap:34px;flex-wrap:wrap;margin-top:54px;color:#93a3b2;font-size:.76rem;letter-spacing:.16em}
+.trust span{display:flex;align-items:center;gap:8px}
+.trust i{width:5px;height:5px;background:var(--accent);border-radius:50%;display:inline-block;font-style:normal}
+
+/* ---------- section scaffolding ---------- */
+.sec{padding:110px 0}
+.sec-head{margin-bottom:60px}
+.sec-head h2{font-size:clamp(1.7rem,3.4vw,2.6rem);font-weight:800;letter-spacing:.01em}
+.sec-head .k{color:var(--accent);letter-spacing:.4em;font-size:.74rem;font-weight:700;display:block;margin-bottom:14px}
+.sec-head p.lead{color:var(--muted);margin-top:14px;max-width:36em}
+.footnote{color:#93a3b2;font-size:.8rem;margin-top:18px;letter-spacing:.05em}
+
+/* ---------- stats ---------- */
+#numbers{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--paper);transition:background 1.6s}
+#numbers .row{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.stat{padding:54px 30px;border-left:1px solid var(--line);text-align:center}
+.stat:first-child{border-left:none}
+.stat b{display:block;font-size:clamp(2rem,4vw,3rem);font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.stat span{color:var(--muted);font-size:.86rem;letter-spacing:.1em}
+
+/* ---------- services ---------- */
+#services .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.card{background:var(--paper);border:1px solid var(--line);padding:38px 32px;border-radius:4px;transition:transform .4s,box-shadow .4s,border-color .4s}
+.card:hover{transform:translateY(-5px);box-shadow:0 18px 44px rgba(11,27,43,.09);border-color:#c6d4e0}
+.card .ic{width:42px;height:42px;color:var(--accent);margin-bottom:22px}
+.card h3{font-size:1.14rem;margin-bottom:12px;letter-spacing:.04em}
+.card p{color:var(--muted);font-size:.93rem}
+
+/* ---------- letter ---------- */
+#letter{background:var(--bg2);transition:background 1.6s}
+#letter .paper{background:var(--paper);max-width:760px;margin:0 auto;padding:70px 64px;border:1px solid var(--line);border-radius:4px;box-shadow:0 24px 60px rgba(11,27,43,.07);transition:background 1.6s}
+#letter .salut{font-style:italic;color:var(--muted);margin-bottom:30px}
+#letter p{margin-bottom:22px;font-size:1.04rem;color:#22303e}
+#letter .sig{margin-top:36px;display:flex;align-items:center;gap:18px}
+#letter .sig .who b{display:block}
+#letter .sig .who span{color:var(--muted);font-size:.85rem}
+#letter .ps{margin-top:40px;padding-top:24px;border-top:1px dashed var(--line);color:#6b5a3e;font-size:.95rem;font-style:italic}
+
+/* ---------- monitoring ---------- */
+#monitor{background:#0b0e13;color:#aeb8c2}
+#monitor .sec-head h2{color:#e6ebf0}
+#monitor .sec-head .k{color:#5f7d9c}
+#monitor .sec-head p.lead{color:#78838f}
+.nvr{background:#07090d;border:1px solid #1c232c;border-radius:6px;padding:22px}
+.nvr .head{display:flex;justify-content:space-between;align-items:center;padding:0 6px 16px;font-size:.76rem;letter-spacing:.18em;color:#5f7d9c}
+.nvr .head .rec{color:#c9463d;display:flex;align-items:center;gap:8px}
+.nvr .head .rec i{width:8px;height:8px;border-radius:50%;background:#c9463d;display:inline-block;animation:blink 1.6s infinite}
+@keyframes blink{0%,60%{opacity:1}70%,100%{opacity:.15}}
+.feeds{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.feed{position:relative;background:#04060a;border:1px solid #151c25;border-radius:3px;overflow:hidden;aspect-ratio:16/10}
+.feed canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+.feed .tag{position:absolute;top:8px;left:10px;font-size:.66rem;letter-spacing:.2em;color:#7d9ab8;z-index:3}
+.feed .clock{position:absolute;top:8px;right:10px;font-size:.66rem;letter-spacing:.12em;color:#57708c;z-index:3}
+.feed .only{position:absolute;bottom:8px;left:10px;font-size:.62rem;color:#c9463d;letter-spacing:.3em;z-index:3}
+.feed .fig{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:58%;opacity:0;transition:opacity 4s;z-index:2}
+body[data-stage="3"] .feed.hall .fig{opacity:.25}
+body[data-stage="4"] .feed.hall .fig{opacity:.5}
+body[data-stage="5"] .feed.hall .fig{opacity:.85}
+.nvr .status{padding:16px 6px 0;font-size:.78rem;letter-spacing:.16em;color:#4d647d;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.nvr .status .safe{color:#5f8a6b}
+body[data-stage="3"] .nvr .status .safe{color:#a9574e}
+
+/* ---------- voices ---------- */
+#voices .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+.quote{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:34px;transition:background 1.6s,border-color 1.6s}
+.quote .stars{color:var(--gold);letter-spacing:.2em;margin-bottom:16px;font-size:.9rem}
+.quote p{color:#22303e;font-size:.98rem;margin-bottom:18px}
+.quote .who{color:var(--muted);font-size:.8rem;letter-spacing:.12em}
+.quote .reply{margin-top:18px;padding:14px 16px;background:#f2f6fa;border-left:3px solid var(--accent);font-size:.86rem;color:#3c4c5c;border-radius:0 3px 3px 0}
+body[data-stage="3"] #voices .quote{background:#120b0c;border-color:#2a1214}
+body[data-stage="3"] #voices .quote p{color:#c7b6ae}
+body[data-stage="3"] #voices .quote .who{color:#8a6f66}
+body[data-stage="3"] #voices .quote .reply{background:#1a0f11;border-left-color:#8a3030;color:#b39a90}
+body[data-stage="3"] #plans .plan h3{color:#e8d5cf}
+body[data-stage="3"] #plans .plan .de{color:#8a6f66}
+body[data-stage="3"] #plans .plan .price{color:#c9463d}
+body[data-stage="3"] .sliderbox h3{color:#e8d5cf}
+body[data-stage="3"] .sliderbox .hint{color:#8a6f66}
+body[data-stage="3"] .plan .btn.ghost{color:#c8b8b2;border-color:#4d2024}
+/* 腐烂是永久的：这些样式一旦生效就不再褪去 */
+body.ruined #voices .quote{background:#120b0c;border-color:#2a1214}
+body.ruined #voices .quote p{color:#c7b6ae}
+body.ruined #voices .quote .who{color:#8a6f66}
+body.ruined #voices .quote .reply{background:#1a0f11;border-left-color:#8a3030;color:#b39a90}
+body.ruined #plans .plan h3{color:#e8d5cf}
+body.ruined #plans .plan .de{color:#8a6f66}
+body.ruined #plans .plan .price{color:#c9463d}
+body.ruined .sliderbox h3{color:#e8d5cf}
+body.ruined .sliderbox .hint{color:#8a6f66}
+body.ruined .plan .btn.ghost{color:#c8b8b2;border-color:#4d2024}
+body[data-stage="4"] :is(#hero,#numbers,#services,#letter){filter:saturate(.7) brightness(.9)}
+body[data-stage="5"] :is(#hero,#numbers,#services,#letter,#monitor,#voices,#plans){filter:saturate(.45) brightness(.78) contrast(1.06)}
+
+/* ---------- plans ---------- */
+#plans .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-items:stretch}
+.plan{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:40px 34px;display:flex;flex-direction:column;transition:background 1.6s,border-color 1.6s}
+.plan.hot{border:2px solid var(--accent);box-shadow:0 24px 60px rgba(14,90,167,.13);position:relative}
+.plan .tagline{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:.68rem;letter-spacing:.24em;padding:5px 16px;border-radius:2px;white-space:nowrap}
+.plan h3{font-size:1.3rem;letter-spacing:.06em}
+.plan .de{color:var(--muted);font-size:.74rem;letter-spacing:.3em;margin-bottom:20px}
+.plan .price{font-size:2rem;font-weight:800;color:var(--accent);margin-bottom:24px}
+.plan ul{list-style:none;flex:1}
+.plan li{padding:10px 0 10px 26px;position:relative;color:#33424f;font-size:.93rem;border-bottom:1px dashed var(--line)}
+.plan li::before{content:"";position:absolute;left:2px;top:19px;width:12px;height:12px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230e5aa7' stroke-width='3'%3E%3Cpath d='M4 13l5 5L20 7'/%3E%3C/svg%3E") no-repeat center/contain}
+.plan .btn{margin-top:28px;text-align:center}
+body[data-stage="3"] #plans .plan{background:#100a0b;border-color:#2a1214}
+body[data-stage="3"] #plans .plan li{color:#b3a49d;border-color:#241213}
+.sliderbox{margin-top:46px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:34px;transition:background 1.6s}
+body[data-stage="3"] .sliderbox{background:#100a0b;border-color:#2a1214}
+.sliderbox h3{margin-bottom:8px}
+.sliderbox .hint{color:var(--muted);font-size:.86rem;margin-bottom:22px}
+.sliderbox .row{display:flex;align-items:center;gap:20px}
+input[type=range]{flex:1;accent-color:var(--accent);height:4px}
+#sliderVal{font-variant-numeric:tabular-nums;color:var(--accent);font-weight:800;min-width:5.4em;text-align:right}
+#sliderNote{margin-top:14px;color:#c9463d;font-size:.85rem;letter-spacing:.1em;min-height:1.4em;opacity:0;transition:opacity .5s}
+#sliderNote.on{opacity:1}
+
+/* ---------- contract ---------- */
+#contract{background:#0c0709;color:#c8b8b2;transition:background 1.6s}
+#contract .sec-head h2{color:#e8dcd6}
+#contract .sec-head .k{color:#8a3030}
+#contract .sec-head p.lead{color:#7d6a63}
+.terms{max-width:820px;margin:0 auto;border:1px solid #2a1518;border-radius:4px;background:#0f090b;padding:56px 60px}
+.terms .t{display:flex;gap:26px;padding:22px 0;border-bottom:1px solid #1d1013;font-size:1rem}
+.terms .t:last-child{border-bottom:none}
+.terms .n{color:#8a3030;font-weight:800;min-width:3.2em}
+.terms .dead{color:#4d4340;text-decoration:line-through;text-decoration-color:#8a3030}
+.terms .vow{margin-top:34px;padding:26px 30px;background:#140a0c;border-left:3px solid var(--blood);font-style:italic;color:#d8c5bd}
+.terms .valid{margin-top:30px;text-align:center;font-size:1.5rem;letter-spacing:.6em;color:#c9463d;text-shadow:0 0 24px rgba(180,30,30,.5)}
+
+/* ---------- quotes (awakening) ---------- */
+#awakening{background:#040304}
+.qstep{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:60px 32px;text-align:center}
+.qstep p{font-size:clamp(1.5rem,3.6vw,2.6rem);line-height:1.6;color:#cfc3bd;max-width:22em;letter-spacing:.06em}
+.qstep p em{color:#c9463d;font-style:normal}
+.qstep small{display:block;margin-top:28px;color:#4d4340;font-size:.8rem;letter-spacing:.4em}
+.qstep.darkred p{color:#a8544a}
+
+/* ---------- counting ---------- */
+#counting{background:#050305;color:#9c8d86;padding:140px 0}
+.panel{max-width:760px;margin:0 auto;border:1px solid #241a1c;background:#0a0608;border-radius:6px;overflow:hidden}
+.panel .bar{background:#120b0d;padding:14px 24px;font-size:.74rem;letter-spacing:.3em;color:#7e5f58;display:flex;justify-content:space-between}
+.panel .rows{padding:30px 40px}
+.panel .r{display:flex;justify-content:space-between;gap:24px;padding:16px 0;border-bottom:1px dashed #1d1416;font-size:.92rem}
+.panel .r:last-child{border-bottom:none}
+.panel .r b{font-variant-numeric:tabular-nums;color:#c9463d;font-weight:800;letter-spacing:.05em}
+.panel .r span{color:#7e6f68}
+.panel .r i{display:block;color:#4d3f3c;font-style:normal;font-size:.8rem;margin-top:4px;letter-spacing:.08em}
+
+/* ---------- door ---------- */
+#door{background:#020103;min-height:130vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.doorstage{position:relative;text-align:center}
+.doorwrap{perspective:900px;display:inline-block;margin:40px 0 34px;position:relative}
+.door{width:min(300px,64vw);height:460px;position:relative;transform-style:preserve-3d;transition:transform 2.4s cubic-bezier(.2,.9,.2,1);transform-origin:left center;margin:0 auto}
+.door.opened{transform:rotateY(-11deg)}
+.door .face{position:absolute;inset:0;background:linear-gradient(160deg,#241014,#120809 60%,#1c0d10);border:2px solid #3a1c20;border-radius:3px 3px 0 0;box-shadow:inset 0 0 60px rgba(0,0,0,.8)}
+.door .panel1{position:absolute;inset:26px 26px 55%;border:1px solid #3a2024;border-radius:2px}
+.door .panel2{position:absolute;inset:52% 26px 26px;border:1px solid #3a2024;border-radius:2px}
+.door .knob{position:absolute;top:50%;right:20px;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#8a6a3a,#3a2a10);box-shadow:0 0 12px rgba(200,150,50,.25)}
+.door .lightleak{position:absolute;top:0;right:-2px;bottom:0;width:3px;background:linear-gradient(180deg,rgba(120,30,30,0),rgba(200,60,50,.85),rgba(120,30,30,0));opacity:0;transition:opacity 2s;border-radius:2px}
+.door.opened .lightleak{opacity:1}
+.chain{position:absolute;top:38%;left:-14%;width:128%;height:26px;z-index:5;transform:rotate(-14deg);transition:transform 1.2s}
+.chain .link{position:absolute;top:6px;height:12px;width:22px;border:3px solid #6a6a72;border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,.6)}
+.chain.taut{transform:rotate(-14deg) translateX(6px)}
+.chain .pad{position:absolute;right:-8px;top:-2px;width:30px;height:30px;background:linear-gradient(160deg,#55555e,#26262c);border-radius:5px;border:1px solid #6a6a72}
+.doorstage h2{color:#c8b8b2;font-size:clamp(1.6rem,3vw,2.2rem);letter-spacing:.2em}
+.doorstage .say{min-height:2.2em;color:#c9463d;letter-spacing:.14em;font-size:1.02rem;margin-top:6px;opacity:0;transition:opacity .8s}
+.doorstage .say.on{opacity:1}
+.doorstage .btns{display:flex;gap:18px;justify-content:center;margin-top:26px;flex-wrap:wrap}
+.btn.doorbtn{background:#1a0b0d;border-color:#4d2024;color:#d8b8b4}
+.btn.doorbtn:hover{background:#2a1013;border-color:#8a3030}
+.btn.stay{background:var(--blood);border-color:var(--blood);color:#f5e8e6}
+.btn.stay:hover{background:#9a1216}
+
+/* ---------- footer ---------- */
+footer{background:#020102;color:#4d4038;padding:100px 0 60px;border-top:1px solid #150c0e}
+footer .grid{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap}
+footer .col b{color:#6a564c;display:block;letter-spacing:.2em;font-size:.78rem;margin-bottom:16px}
+footer .col span{display:block;font-size:.82rem;margin-bottom:8px;color:#4d4038}
+footer .mark{opacity:.5}
+footer .mark svg{width:56px;height:56px}
+#guestno{margin-top:34px;font-size:.74rem;letter-spacing:.3em;color:#3a2e2a}
+
+/* ---------- chat bubble ---------- */
+#chat{position:fixed;right:26px;bottom:26px;z-index:9200;font-family:inherit}
+#chat .bub{width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;
+  box-shadow:0 12px 30px rgba(14,90,167,.35);display:flex;align-items:center;justify-content:center;transition:all .8s;position:relative}
+#chat .bub svg{width:26px;height:26px}
+#chat .bub .dot{position:absolute;top:-2px;right:-2px;width:14px;height:14px;border-radius:50%;background:#e0392e;border:2px solid #fff;opacity:0;transition:opacity .5s}
+#chat .bub.hasmsg .dot{opacity:1}
+#chat .panel{position:absolute;bottom:70px;right:0;width:min(320px,80vw);background:var(--paper);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 24px 60px rgba(0,0,0,.25);padding:20px;opacity:0;pointer-events:none;transform:translateY(10px);transition:all .4s;text-align:left}
+#chat .panel.open{opacity:1;pointer-events:auto;transform:none}
+#chat .panel .hd{font-size:.72rem;letter-spacing:.26em;color:var(--muted);margin-bottom:12px;display:flex;justify-content:space-between}
+#chat .panel .msg{font-size:.92rem;color:#22303e;min-height:3em}
+#chat .panel .more{margin-top:14px;font-size:.76rem;color:var(--accent);letter-spacing:.1em;cursor:pointer;border:none;background:none}
+body[data-stage="2"] #chat .bub{background:#5c1418;box-shadow:0 12px 30px rgba(120,20,20,.4)}
+#chat .bub .lbl{position:absolute;right:64px;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:.72rem;letter-spacing:.2em;
+  color:#fff;background:rgba(10,10,12,.85);padding:6px 12px;border-radius:3px;opacity:0;transition:opacity .6s;pointer-events:none}
+#chat .bub:hover .lbl{opacity:1}
+
+/* ---------- sound ---------- */
+#snd{position:fixed;left:26px;bottom:26px;z-index:9200}
+#snd button{background:rgba(10,14,20,.6);border:1px solid rgba(255,255,255,.18);color:#cfd8e0;border-radius:30px;
+  padding:10px 18px;font-size:.76rem;letter-spacing:.2em;cursor:pointer;backdrop-filter:blur(8px);transition:all .6s}
+#snd button:hover{border-color:rgba(255,255,255,.5)}
+
+/* ---------- corruption ---------- */
+[data-corrupt]{position:relative}
+.gl{color:#c9463d;text-shadow:0 0 8px rgba(200,40,40,.6)}
+body[data-stage="4"] .shiver{animation:shiver 3.4s infinite}
+@keyframes shiver{0%,92%,100%{transform:translate(0,0) skewX(0)}93%{transform:translate(-1px,1px) skewX(.4deg)}95%{transform:translate(1px,-1px)}97%{transform:translate(-1px,0) skewX(-.3deg)}}
+.rgb{animation:rgbshift 2.8s infinite}
+@keyframes rgbshift{0%,88%,100%{text-shadow:none}90%{text-shadow:-2px 0 rgba(200,30,40,.7),2px 0 rgba(30,120,220,.5)}93%{text-shadow:2px 0 rgba(200,30,40,.6),-2px 0 rgba(30,120,220,.4)}}
+
+/* ---------- responsive ---------- */
+@media (max-width:920px){
+  #hero .wrap{grid-template-columns:1fr}
+  #numbers .row{grid-template-columns:repeat(2,1fr)}
+  .stat{border-left:none;border-top:1px solid var(--line)}
+  #services .grid{grid-template-columns:repeat(2,1fr)}
+  .feeds{grid-template-columns:repeat(2,1fr)}
+  #voices .grid{grid-template-columns:1fr}
+  #plans .grid{grid-template-columns:1fr}
+  nav .links a.nl{display:none}
+  #letter .paper{padding:44px 30px}
+  .terms{padding:36px 26px}
+}
+@media (max-width:600px){
+  #services .grid{grid-template-columns:1fr}
+  .feeds{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  .shiver,.rgb,#ticker .in{animation:none !important}
+  .door{transition-duration:.6s}
+}
+</style>
+</head>
+<body data-stage="0" class="gated">
+
+<!-- 访客须知 -->
+<div id="gate">
+  <div class="gatecard">
+    <div class="warn">⚠</div>
+    <h2>内容警告 · CONTENT NOTICE</h2>
+    <p>您即将进入的是一部<b>恐怖互动作品</b>，不是真实的安保公司。</p>
+    <p>它包含：被监视与被追踪的主题、突发画面与音效、受控的闪烁（单次短闪，无连续频闪）、随阅读逐渐失稳的措辞，以及一个只对一个人说话的网站。</p>
+    <p>不建议深夜独自、佩戴耳机、心脏或光敏感脆弱时体验。未满 16 岁请绕行。</p>
+    <p class="meta">建议开启环境音（左下角） · 建议使用电脑 · 体验时长约 5–8 分钟</p>
+    <div class="gatebtns">
+      <button id="gateEnter">我已知晓，进入</button>
+      <button id="gateLeave">离开</button>
+    </div>
+    <p id="gateSay"></p>
+  </div>
+</div>
+
+<!-- fixed atmosphere layers -->
+<div id="grain"></div>
+<div id="scanlines"></div>
+<div id="vignette"></div>
+<div id="flash" aria-hidden="true">
+  <svg class="figfar" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
+    <path d="M100 8 C 52 8 30 46 30 96 L30 250 L170 250 L170 96 C170 46 148 8 100 8 Z" fill="#0c0f14" stroke="#1e2733" stroke-width="2"/>
+    <path d="M100 20 C 62 20 44 52 44 92 L44 250 L156 250 L156 92 C156 52 138 20 100 20 Z" fill="#070a0e"/>
+    <ellipse cx="76" cy="118" rx="10" ry="7" fill="#4aa3ff" opacity=".95"/>
+    <ellipse cx="124" cy="118" rx="10" ry="7" fill="#4aa3ff" opacity=".95"/>
+    <ellipse cx="76" cy="118" rx="4" ry="3.4" fill="#dff1ff"/>
+    <ellipse cx="124" cy="118" rx="4" ry="3.4" fill="#dff1ff"/>
+  </svg>
+  <svg class="figclose" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+    <path d="M200 -40 C 96 -40 58 52 58 150 L58 320 L342 320 L342 150 C342 52 304 -40 200 -40 Z" fill="#0a0c11" stroke="#33161a" stroke-width="3"/>
+    <path d="M200 -14 C 118 -14 84 66 84 148 L84 320 L316 320 L316 148 C316 66 282 -14 200 -14 Z" fill="#05070a"/>
+    <ellipse cx="156" cy="128" rx="17" ry="11" fill="#63b0ff"/>
+    <ellipse cx="244" cy="128" rx="17" ry="11" fill="#63b0ff"/>
+    <ellipse cx="156" cy="128" rx="7" ry="6" fill="#eaf6ff"/>
+    <ellipse cx="244" cy="128" rx="7" ry="6" fill="#eaf6ff"/>
+    <path d="M84 210 Q 200 178 316 210 L316 230 Q 200 198 84 230 Z" fill="#3a0c10" opacity=".8"/>
+  </svg>
+</div>
+<div id="tracker" aria-hidden="true"><div class="ring"></div><div class="dot"></div><span class="tag" id="trackerTag">目标 · 001 · 安全</span></div>
+<div id="fade">
+  <div class="final" id="finalText"></div>
+</div>
+<div id="whisper"></div>
+
+<!-- nav -->
+<nav>
+  <div class="bar">
+    <div class="logo" id="logoBtn" title="KÖNIG SICHERHEITSDIENST">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path id="logoCloud" d="M14 40a10 10 0 0 1 2-19 14 14 0 0 1 27-4 11 11 0 0 1 7 19z" fill="#0e5aa7"/><path id="logoCrown" d="M22 40l4-10 6 6 6-8 4 12z" fill="#c9962e"/></svg>
+      <span>KSG 柯尼希安保<span class="de">SICHERHEITSDIENST · ZÜRICH</span></span>
+    </div>
+    <div class="links">
+      <a class="nl" href="#services" data-nav>服务</a>
+      <a class="nl" href="#monitor" data-nav>监测中心</a>
+      <a class="nl" href="#voices" data-nav>客户的声音</a>
+      <a class="nl" href="#plans" data-nav>方案</a>
+      <a class="nl" href="#contract" data-nav>条款</a>
+      <a class="nl navcta" href="#door" id="navCta" data-nav>预约咨询</a>
+    </div>
+  </div>
+</nav>
+<div id="ticker"><div class="in" id="tickerIn"></div></div>
+
+<!-- ==================== STAGE 0 · 完全正常的营销网站 ==================== -->
+<header id="hero" data-stage="0">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">KÖNIG SICHERHEITSDIENST · EST. 2009 · ZÜRICH</div>
+      <h1 class="big">把安全感，<br>做成<span class="thin">一项工程</span>。</h1>
+      <p class="sub">KSG 是一家位于苏黎世湖畔的私人安防工作室。我们不接更大的客户，我们只做更深。危险在抵达您的生活之前，就应该被结束。</p>
+      <div class="ctas">
+        <a class="btn primary" href="#services" data-nav>了解我们的体系</a>
+        <a class="btn ghost" href="#letter" data-nav>创始人的一封信</a>
+      </div>
+      <div class="trust">
+        <span><i></i>KORTAC 认证承包商</span>
+        <span><i></i>苏黎世州警合作单位</span>
+        <span><i></i>ISO/IEC 27001</span>
+        <span><i></i>湖畔物业指定安保</span>
+      </div>
+    </div>
+    <div class="art" aria-hidden="true">
+      <svg viewBox="0 0 460 420" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#0e5aa7" stop-opacity=".16"/>
+            <stop offset="1" stop-color="#0a3f77" stop-opacity=".02"/>
+          </linearGradient>
+        </defs>
+        <circle cx="330" cy="90" r="56" fill="#0e5aa7" opacity=".08"/>
+        <path d="M0 300 L90 210 L150 268 L230 170 L310 262 L380 214 L460 296 L460 420 L0 420 Z" fill="#0a3f77" opacity=".10"/>
+        <path d="M0 330 L110 250 L200 318 L300 236 L400 312 L460 276 L460 420 L0 420 Z" fill="#0e5aa7" opacity=".14"/>
+        <rect x="0" y="330" width="460" height="90" fill="url(#lake)"/>
+        <g opacity=".9">
+          <path d="M186 118a26 26 0 0 1 5-49 36 36 0 0 1 70-10 28 28 0 0 1 18 59z" fill="#0e5aa7" opacity=".85"/>
+          <path d="M204 118l10-26 16 16 16-21 10 31z" fill="#c9962e"/>
+        </g>
+        <text x="230" y="402" text-anchor="middle" style="font-size:11px;letter-spacing:.5em" fill="#7d8fa1">SICHERHEIT · DISKRETION · STÄNDIGKEIT</text>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section id="numbers" data-stage="0">
+  <div class="wrap">
+    <div class="row">
+      <div class="stat"><b>15</b><span>年 · 零失守</span></div>
+      <div class="stat"><b>100%</b><span>客户留存率</span></div>
+      <div class="stat"><b>0</b><span>起公开事故</span></div>
+      <div class="stat"><b data-corrupt>1</b><span>位客户</span></div>
+    </div>
+    <div class="footnote" style="text-align:center;padding-bottom:50px">关于"1"：我们所有的方法、编制与设备，都只为一个人设计。专注，是我们全部的方法论。</div>
+  </div>
+</section>
+
+<!-- ==================== STAGE 1 · 服务（开始有一点不对劲） ==================== -->
+<section id="services" class="sec" data-stage="1">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="k">LEISTUNGEN · 服务体系</span>
+      <h2 data-corrupt>由内而外的六层。</h2>
+      <p class="lead">常规安保公司销售设备。我们提供的是一种状态：您再也不需要回头看的那个瞬间。</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></svg>
+        <h3 data-corrupt>周界情报</h3>
+        <p data-corrupt>这座城市里有可能对您动手的人，我们都认识。名单在我的脑子里，每周更新。</p>
+      </div>
+      <div class="card">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="11" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <h3 data-corrupt>出入管理</h3>
+        <p data-corrupt>每一位接近您的人，都会先被我们认识。您不需要认识他们。这是分工。</p>
+      </div>
+      <div class="card">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <h3 data-corrupt>全天候值守</h3>
+        <p data-corrupt>您睡觉的时候，我们醒着。您做梦的时候，我们听着楼道、电梯井，和这座楼里每一扇门。</p>
+      </div>
+      <div class="card">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l18-7-7 18-2.5-8.5z"/></svg>
+        <h3 data-corrupt>紧急响应</h3>
+        <p data-corrupt>四通电话：装备、车辆、权限、十一小时的航班。然后我进去。门是我破的，我们不谈判。</p>
+      </div>
+      <div class="card">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21C7 17 3 13.5 3 9.5A4.5 4.5 0 0 1 12 6a4.5 4.5 0 0 1 9 3.5c0 4-4 7.5-9 11.5z"/></svg>
+        <h3 data-corrupt>生活保障</h3>
+        <p data-corrupt>餐饮、行程、烘干被雨淋湿的衣服，把黑伞放在鞋柜最外面。您什么都不必做。什么都不必担心。</p>
+      </div>
+      <div class="card">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.8 2.8M16.2 16.2L19 19M19 5l-2.8 2.8M7.8 16.2L5 19"/></svg>
+        <h3 data-corrupt>防丢定位</h3>
+        <p data-corrupt>手机、手表、项链。三根线，总有一根连着您。您戴着它们，就像被牵着。我们不看，只在您失联的时候亮。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 创始人的信 ==================== -->
+<section id="letter" class="sec" data-stage="1">
+  <div class="wrap">
+    <div class="paper serif">
+      <p class="salut" data-corrupt>Liebe Schatz,（亲爱的客户，）</p>
+      <p data-corrupt>我十九岁第一次上战场。教官对我说：König，你这种体格，进任何一扇门都是威胁。你要学会控制自己，别压垮东西。我练了十七年——练开门轻一点，关门轻一点，抱人轻一点。</p>
+      <p data-corrupt>很多人问：为什么一家安保公司只服务一位客户？我的回答很简单。彻底的安保不是产品，不是墙，不是锁。是一种注意力。而注意力，不可分割。</p>
+      <p data-corrupt>我们的工作，是让"危险"这个词从一个人的生活里变成一个抽象名词。让她忘记自己有多久没有回头看过了。这是我们最满意的指标。</p>
+      <p data-corrupt>每一个接近您的人都被我们审过。您走过的每一条路线我们都熟。您睡觉的时候我们在做事——您不需要知道是什么事。知道的人越少，您越安全。</p>
+      <div class="sig">
+        <svg width="120" height="44" viewBox="0 0 120 44" aria-hidden="true"><path d="M4 34 C 20 8, 30 40, 44 22 S 66 10, 74 26 S 96 40, 116 14" fill="none" stroke="#0b1b2b" stroke-width="2" stroke-linecap="round" opacity=".8"/></svg>
+        <div class="who"><b data-corrupt>K.</b><span data-corrupt>创始人 · 首席守夜人 · 两米零六</span></div>
+      </div>
+      <p class="ps" data-corrupt>P.S. 外面在下雨的话，看一眼鞋柜。伞在最外面。我一直放在那里的。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== STAGE 2 · 监测中心（第一次变暗） ==================== -->
+<section id="monitor" class="sec" data-stage="2">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="k" data-corrupt>ÜBERWACHUNG · 监测中心</span>
+      <h2 data-corrupt>系统正常。您很安全。</h2>
+      <p class="lead" data-corrupt>以下为实时画面。为了您的安心，您可以随时观看它们。它们也一直在观看。</p>
+    </div>
+    <div class="nvr">
+      <div class="head">
+        <span data-corrupt>KSG-NVR · 通道 1-6</span>
+        <span class="rec"><i></i>REC</span>
+        <span class="mono" id="nvrClock">--:--:--</span>
+      </div>
+      <div class="feeds">
+        <div class="feed"><canvas width="128" height="80"></canvas><span class="tag" data-corrupt>湖岸 SEE</span><span class="clock mono">--:--</span></div>
+        <div class="feed"><canvas width="128" height="80"></canvas><span class="tag" data-corrupt>前门 EINGANG</span><span class="clock mono">--:--</span></div>
+        <div class="feed"><canvas width="128" height="80"></canvas><span class="tag" data-corrupt>车库 GARAGE</span><span class="clock mono">--:--</span></div>
+        <div class="feed hall"><canvas width="128" height="80"></canvas><span class="tag" data-corrupt>楼道 FLUR</span><span class="clock mono">--:--</span>
+          <svg class="fig" viewBox="0 0 100 160" xmlns="http://www.w3.org/2000/svg"><path d="M50 10 C 30 10 24 34 24 62 L24 160 L76 160 L76 62 C76 34 70 10 50 10 Z" fill="#000"/></svg>
+        </div>
+        <div class="feed"><canvas width="128" height="80"></canvas><span class="tag" data-corrupt>玄关 DIELE</span><span class="clock mono">--:--</span></div>
+        <div class="feed"><canvas width="128" height="80"></canvas><span class="tag" data-corrupt>卧室 SCHLAFZIMMER</span><span class="only" data-corrupt>仅音频 · AUDIO ONLY</span><span class="voice mono" id="bedVoice"></span><span class="clock mono">--:--</span></div>
+        <div class="feed feed07"><canvas width="128" height="80"></canvas><span class="tag" data-corrupt>通道 07</span><span class="only" data-corrupt>不应存在 · NETZWERK?</span><span class="clock mono">--:--</span></div>
+      </div>
+      <div class="status">
+        <span data-corrupt>事件日志：无异常</span>
+        <span class="safe" id="safeLine" data-corrupt>您很安全。您很安全。您很安全。</span>
+        <span data-corrupt>下次巡逻：进行中</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== STAGE 3 · 声音与方案 ==================== -->
+<section id="voices" class="sec" data-stage="3">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="k" data-corrupt>STIMMEN · 客户的声音</span>
+      <h2 data-corrupt>她再也没有回头看过。</h2>
+      <p class="lead" data-corrupt>以下评价来自我们唯一的客户。我们只有一位客户，所以我们记得她说的每一个字。</p>
+    </div>
+    <div class="grid">
+      <div class="quote">
+        <div class="stars" data-corrupt>★★★★★</div>
+        <p data-corrupt>"从电话到敲门，四分钟。后来我才知道，他们本来就在楼下。一直都在。"</p>
+        <div class="who" data-corrupt>—— M. 女士，苏黎世银行家</div>
+      </div>
+      <div class="quote">
+        <div class="stars" data-corrupt>★★★★★</div>
+        <p data-corrupt>"他们认识我楼下每一辆车。有一辆陌生的面包车停了两天，第三天它自己消失了。我没有报过警。我不需要。"</p>
+        <div class="who" data-corrupt>—— 匿名客户，湖畔住户</div>
+      </div>
+      <div class="quote">
+        <div class="stars" data-corrupt>★★★★☆</div>
+        <p data-corrupt>"唯一的意见：他们换掉了我全部的锁，没有事先告诉我。但说实话，我从此再也没丢过任何东西。再也没有丢过。"</p>
+        <div class="who" data-corrupt>—— C. 女士，出差距离：日内瓦 306 公里</div>
+        <div class="reply" data-corrupt>KSG 回复：换锁是为了您。门链也加了一道。您醒来之前，事情已经做完了。这不构成意见，这构成安心。</div>
+      </div>
+      <div class="quote">
+        <div class="stars" data-corrupt>★★<span class="gl">▓▓▓</span></div>
+        <p><span data-corrupt>"我试过取消服务。<span class="gl">▓▓▓▓▓▓▓▓▓▓▓▓</span>"</span></p>
+        <div class="who" data-corrupt>—— C. 女士（本条评价由服务方代为录入）</div>
+        <div class="reply" data-corrupt>KSG 回复：我们没有收到过任何取消请求。以后也不会收到。她现在很满意。她一直都很满意。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="plans" class="sec" data-stage="3">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="k" data-corrupt>ANGEBOTE · 保护方案</span>
+      <h2 data-corrupt>三种深度。您已在其中一种。</h2>
+    </div>
+    <div class="grid">
+      <div class="plan">
+        <h3 data-corrupt>哨兵</h3>
+        <div class="de" data-corrupt>SENTINEL</div>
+        <div class="price" data-corrupt>基础层</div>
+        <ul>
+          <li data-corrupt>门锁年度检修</li>
+          <li data-corrupt>门链 × 1</li>
+          <li data-corrupt>每周外围巡逻</li>
+          <li data-corrupt>降水提醒（黑伞已就位）</li>
+        </ul>
+        <a class="btn ghost" href="#door" data-nav data-corrupt>了解详情</a>
+      </div>
+      <div class="plan hot">
+        <div class="tagline" data-corrupt>当前方案 · 正在生效</div>
+        <h3 data-corrupt>换岗</h3>
+        <div class="de" data-corrupt>ABLÖSUNG · SHIFT CHANGE</div>
+        <div class="price" data-corrupt>推荐层</div>
+        <ul>
+          <li data-corrupt>哨兵方案全部内容</li>
+          <li data-corrupt>三根线：手机 · 手表 · 项链（自婚礼当周部署）</li>
+          <li data-corrupt>定位备份每周 3 次</li>
+          <li data-corrupt>全城名单每周更新</li>
+          <li data-corrupt>您的保镖生涯退休计划（工资照发）</li>
+          <li data-corrupt>夜间值守至天亮（自愿加班）</li>
+        </ul>
+        <a class="btn primary" href="#door" data-nav data-corrupt>已生效 · 无需操作</a>
+      </div>
+      <div class="plan">
+        <h3 data-corrupt>王座</h3>
+        <div class="de" data-corrupt>THRON · 不对公众开放</div>
+        <div class="price" data-corrupt>——</div>
+        <ul>
+          <li data-corrupt>该方案无法被选择。</li>
+          <li data-corrupt>该方案无法被退出。</li>
+          <li data-corrupt>您已经在其中。</li>
+          <li data-corrupt>您一直都在其中。</li>
+        </ul>
+        <a class="btn ghost" style="opacity:.4;pointer-events:none" data-corrupt>无需选择</a>
+      </div>
+    </div>
+    <div class="sliderbox">
+      <h3 data-corrupt>自由度调节（高级设置）</h3>
+      <p class="hint" data-corrupt>拖动滑块调整您的自由度。大多数客户从不使用此功能。</p>
+      <div class="row">
+        <input type="range" id="freeSlider" min="0" max="100" value="100" aria-label="自由度">
+        <span id="sliderVal" class="mono">100%</span>
+      </div>
+      <p id="sliderNote"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== STAGE 4 · 合同（面具开始滑落） ==================== -->
+<section id="contract" class="sec" data-stage="4">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="k" data-corrupt>VERTRAG · 服务条款</span>
+      <h2 data-corrupt>请阅读后再继续。您不会读的。没关系，都一样。</h2>
+      <p class="lead" data-corrupt>以下条款已在您不知情的情况下生效。准确地说：在神父念完誓言的那一刻。</p>
+    </div>
+    <div class="terms serif">
+      <div class="t"><span class="n">第 1 条</span><span data-corrupt>本协议无固定期限。期限一栏写着：永远。写的时候手很稳。</span></div>
+      <div class="t"><span class="n">第 2 条</span><span data-corrupt>客户可随时终止本协议。<span class="dead">（本条为装饰性条款。）</span></span></div>
+      <div class="t"><span class="n">第 3 条</span><span data-corrupt>"危险"由服务方单方面定义。凡是可能把您从我身边带走的东西，都算。</span></div>
+      <div class="t"><span class="n">第 4 条</span><span data-corrupt>"外面"由服务方定义。您以前住的那个世界，已包含在"危险"的定义里。</span></div>
+      <div class="t"><span class="n">第 5 条</span><span data-corrupt>绑缚式追踪装置（手机、手表、项链）已于婚礼当周部署。您没有问过。我没有讲。现在讲了，您不许生气。</span></div>
+      <div class="vow" data-corrupt>婚礼那天，神父念的是"无论顺境逆境，疾病健康"。他没有念"但是不许跑"这一条。你当时在场。你听到了。<br>—— 所以，合同有效。</div>
+      <div class="valid" data-corrupt>合 同 有 效</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== STAGE 4→5 · 真话（一段一段，像下楼梯） ==================== -->
+<section id="awakening">
+  <div class="qstep" data-stage="4"><p data-corrupt>这个问题不能当睡前呓语打发。<small>2026 年 9 月 19 日 · 凌晨 · 主卧 · 黑暗里</small></p></div>
+  <div class="qstep" data-stage="4"><p data-corrupt>"Schatz，我不当这个问题是玩笑。<em>我给你真的答案。</em>"</p></div>
+  <div class="qstep" data-stage="4"><p data-corrupt>"第一小时起，你的手机、手表、项链，至少一样会立刻发出它的位置。<em>这个我从结婚那周就布置好了。</em>你没问过，我也没讲。"</p></div>
+  <div class="qstep" data-stage="4"><p data-corrupt>"找到地方，我进去。绑架你的人在那一个小时里最好已经放了你，因为<em>门是我破的</em>，我不会跟他谈判。"</p></div>
+  <div class="qstep" data-stage="4"><p data-corrupt>"苏黎世的报纸第二天只会写一句话：<em>某郊区一处仓库发生燃气爆炸。</em>真相只有你知道——你被我从瓦砾里抱出来，我抱着你走。"</p></div>
+  <div class="qstep darkred" data-stage="4"><p data-corrupt>"但是 Schatz，以上全部是备用方案。真正的答案是——<em>我不允许它发生。</em>"</p></div>
+  <div class="qstep darkred" data-stage="4"><p data-corrupt>"你梦里那个客厅，喊了没人来。这里不一样。<em>你喊一声，全城的人都得让路。</em>"</p></div>
+  <div class="qstep darkred" data-stage="4"><p data-corrupt>"你不用改变任何东西。<em>改变，是我这份工。</em>"</p></div>
+  <div class="qstep darkred" data-stage="5"><p data-corrupt>"现在换岗。你的保镖生涯可以退休了。<em>工资照发，岗位我顶。</em>"</p></div>
+  <div class="qstep darkred" data-stage="5"><p data-corrupt>"你夜里只管做梦。<em>梦外面有我。</em>"</p></div>
+  <div class="qstep darkred" data-stage="5"><p><span data-corrupt>梦外面有我。</span><br><span class="gl" data-corrupt>梦里面，也有我。</span></p></div>
+  <div class="qstep darkred" data-stage="5"><p><span data-corrupt>你醒了。</span><br><span class="gl" data-corrupt>不。你没有。</span></p></div>
+</section>
+
+<!-- ==================== STAGE 5 · 计数 ==================== -->
+<section id="counting" data-stage="5">
+  <div class="wrap">
+    <div class="sec-head" style="text-align:center">
+      <span class="k" data-corrupt>protokoll · 记录</span>
+      <h2 style="color:#d8c5bd" data-corrupt>我数着呢。</h2>
+      <p class="lead" style="color:#6a564c" data-corrupt>不是今天才开始数的。从来不曾停止过。</p>
+    </div>
+    <div class="panel mono">
+      <div class="bar"><span data-corrupt>KSG · BESUCHER-PROTOKOLL</span><span data-corrupt>访客 001/001</span></div>
+      <div class="rows">
+        <div class="r"><span data-corrupt>您已在本页停留</span><b id="cTime">00:00</b></div>
+        <div class="r"><span data-corrupt>您向下滚动了</span><b id="cScroll">0.0 米</b></div>
+        <div class="r"><span data-corrupt>您的鼠标移动过</span><b id="cMouse">0 次</b></div>
+        <div class="r"><span data-corrupt>您停下来发呆最久的一次</span><b id="cIdle">0.0 秒</b><i id="cIdleNote">在想什么？说给我听。</i></div>
+        <div class="r"><span data-corrupt>您试着往回看了</span><b id="cBack">0 次</b><i data-corrupt>没关系的。往回走是没用的。但被您回头看，是好的。</i></div>
+        <div class="r"><span data-corrupt>自您点开这一页，我的心率</span><b>72 → <span id="cHr">72</span></b><i data-corrupt>看到您还在，就会慢下来。</i></div>
+        <div class="r"><span data-corrupt>您的本地时间</span><b id="cClock">--:--</b><i id="cClockNote">现在。</i></div>
+        <div class="r"><span data-corrupt>您的屏幕</span><b id="cScreen">—</b><i data-corrupt>分辨率。我记住了。</i></div>
+        <div class="r"><span data-corrupt>您的语言设置</span><b id="cLang">—</b><i data-corrupt>学的第一句，是你的名字。</i></div>
+        <div class="r"><span data-corrupt>您离开过这个标签页</span><b id="cAway">0 次</b><i data-corrupt>每一次都数了。每一次都等到了。</i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== STAGE 5 · 门 ==================== -->
+<section id="door" data-stage="5">
+  <div class="doorstage">
+    <span class="k" style="color:#8a3030;letter-spacing:.4em;font-size:.74rem" data-corrupt>LETZTE TÜR · 最后一道门</span>
+    <h2 data-corrupt>外面下雨了。</h2>
+    <div class="doorwrap">
+      <div class="door" id="theDoor">
+        <div class="face">
+          <div class="panel1"></div>
+          <div class="panel2"></div>
+          <div class="knob"></div>
+        </div>
+        <div class="lightleak"></div>
+      </div>
+      <div class="chain" id="theChain"></div>
+    </div>
+    <p class="say" id="doorSay"></p>
+    <div class="btns">
+      <button class="btn doorbtn" id="doorBtn" data-corrupt>开 门</button>
+      <button class="btn stay" id="stayBtn" style="display:none" data-corrupt>留 在 里 面</button>
+    </div>
+    <p style="margin-top:40px;color:#4d3f3c;font-size:.8rem;letter-spacing:.2em" data-corrupt>门链加了一道。您忘了吗？——是谁加的？</p>
+  </div>
+</section>
+
+<!-- footer -->
+<footer data-stage="5">
+  <div class="wrap">
+    <div class="grid">
+      <div class="col mark">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 40a10 10 0 0 1 2-19 14 14 0 0 1 27-4 11 11 0 0 1 7 19z" fill="#4d2024"/><path d="M22 40l4-10 6 6 6-8 4 12z" fill="#8a3030"/></svg>
+        <div style="margin-top:14px;letter-spacing:.2em;font-size:.8rem" data-corrupt>KÖNIG SICHERHEITSDIENST</div>
+      </div>
+      <div class="col">
+        <b data-corrupt>公司</b>
+        <span data-corrupt>关于我们：一个人，守另一个人</span>
+        <span data-corrupt>招聘：常年无空缺，岗位不外流</span>
+        <span data-corrupt>新闻：无。我们不需要被看见。</span>
+      </div>
+      <div class="col">
+        <b data-corrupt>联系</b>
+        <span data-corrupt>电话：您喊一声就行</span>
+        <span data-corrupt>地址：苏黎世 · 湖畔 · 您楼下</span>
+        <span data-corrupt>营业时间：从不打烊</span>
+      </div>
+      <div class="col">
+        <b data-corrupt>法律</b>
+        <span data-corrupt>本网站没有营销部门。营销需要多个客户。</span>
+        <span data-corrupt>本站从未面向公众运营。</span>
+        <span data-corrupt>访客统计：1。从始至终都是 1。</span>
+      </div>
+    </div>
+    <div id="guestno" data-corrupt>© 自相遇那天起，永远 · KSG — 与您同在，从未离开 · 访客编号：001</div>
+  </div>
+</footer>
+
+<!-- chat -->
+<div id="chat">
+  <button class="bub" id="chatBtn" aria-label="在线客服">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 0 1-8 8H5l-2 2V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8z"/></svg>
+    <span class="dot"></span><span class="lbl">KSG 客服 · 在线</span>
+  </button>
+  <div class="panel" id="chatPanel">
+    <div class="hd"><span data-corrupt>KSG · 在线支持</span><span class="mono" id="chatClock">--:--</span></div>
+    <div class="msg" id="chatMsg" data-corrupt>您好，这里是 KSG 在线支持。有什么可以帮您？</div>
+    <button class="more" id="chatMore" data-corrupt>展开更多 →</button>
+  </div>
+</div>
+
+<!-- sound -->
+<div id="snd"><button id="sndBtn">♪ 启用环境音（雨）</button></div>
+
+<script>
+/* ============================================================
+   KSG · 内部系统脚本
+   访客：我们只有一位。所以这段代码写得像一封情书。
+   ============================================================ */
+(function(){
+"use strict";
+
+/* ---------- state ---------- */
+var raw = 0;            // 当次滚动进度
+var seen = 0;           // 见过的最深进度（只涨不跌——上下滚动不构成离开）
+var stage = 0;
+var maxStage = 0;
+var start = performance.now();
+var mouseMoves = 0, backCount = 0, idleMax = 0, lastMove = performance.now();
+var lastY = window.scrollY;
+var thresholdCrossed = {};
+var finished = false;
+var awayCount = 0, awayAt = 0;
+var cursorLocked = 0, topTries = 0, lastTopTry = 0;
+var stage5Enter = 0, loopCount = 0;
+
+var $ = function(s){ return document.querySelector(s); };
+var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+/* ---------- ticker ---------- */
+var tickerItems = [
+  "苏黎世湖畔 · 当前威胁等级：无",
+  "您的位置：已确认",
+  "您的状态：安全",
+  "下次巡逻：进行中",
+  "降水概率 40%（黑伞已就位）",
+  "您很安全"
+];
+var ti = tickerItems.join('<span class="sep">◆</span>') + '<span class="sep">◆</span>';
+$('#tickerIn').innerHTML = ti + ti;
+
+/* ---------- document title & favicon per stage ---------- */
+var titles = [
+  "KSG 柯尼希安保 — 真正的安全",
+  "KSG 安保 — 您正在被妥善照顾",
+  "您读得很认真。很好。",
+  "别关掉这个页面。",
+  "我看得见您。",
+  "欢迎回家"
+];
+var favicons = [
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M14 40a10 10 0 0 1 2-19 14 14 0 0 1 27-4 11 11 0 0 1 7 19z' fill='%230e5aa7'/%3E%3Cpath d='M22 40l4-10 6 6 6-8 4 12z' fill='%23c9962e'/%3E%3C/svg%3E",
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M14 40a10 10 0 0 1 2-19 14 14 0 0 1 27-4 11 11 0 0 1 7 19z' fill='%235c1418'/%3E%3Cpath d='M22 40l4-10 6 6 6-8 4 12z' fill='%238a3030'/%3E%3C/svg%3E"
+];
+function setFavicon(i){ var l=document.querySelector("link[rel=icon]"); if(l) l.href=favicons[i]||favicons[0]; }
+
+/* ---------- corruption ---------- */
+/* 高阶段时，词会被换掉。不是乱码，是 nearer 的词。 */
+var wordMap = [
+  [/安全/g,"Sicherheit"],[/保护/g,"Bewahrung"],[/守护/g,"Hüten"],
+  [/客户/g,"Schatz"],[/服务/g,"守夜"],[/离开/g,"留下"],
+  [/自由/g,"Zuhause"],[/监控/g,"看"],[/我们/g,"我"],
+  [/回家/g,"Heim"],[/咨询/g,"Bleib"],[/门口/g,"门槛"]
+];
+var glitchChars = "▓▒░█<>/\\|=+*#";
+var corruptEls = [];
+function collectCorrupt(){
+  corruptEls = $$("[data-corrupt]");
+  corruptEls.forEach(function(el){ if(!el.dataset.orig) el.dataset.orig = el.innerHTML; });
+}
+function applyCorruption(el, corr){
+  var orig = el.dataset.orig;
+  if (corr <= 0.02){ if(el._dirty){ el.innerHTML = orig; el._dirty=false; } return; }
+  var txt = orig;
+  if (corr > 0.55){
+    wordMap.forEach(function(m){ txt = txt.replace(m[0], m[1]); });
+  }
+  if (corr > 0.3){
+    var out = "";
+    for (var i=0;i<txt.length;i++){
+      var ch = txt[i];
+      if (ch === '<'){ // 保持标签
+        var end = txt.indexOf('>', i);
+        out += txt.slice(i, end+1); i = end; continue;
+      }
+      if (ch !== ' ' && ch !== '<' && Math.random() < corr*0.06){
+        out += '<span class="gl">'+glitchChars[Math.floor(Math.random()*glitchChars.length)]+'</span>';
+      } else out += ch;
+    }
+    txt = out;
+  }
+  if (el.innerHTML !== txt){ el.innerHTML = txt; el._dirty = true; }
+}
+setInterval(function(){
+  var corr = Math.max(0, (seen - 0.30) / 0.70);
+  corruptEls.forEach(function(el){
+    if (!el.isConnected) return;
+    var r = el.getBoundingClientRect();
+    if (r.bottom < -80 || r.top > innerHeight + 80) return;
+    applyCorruption(el, corr);
+  });
+}, 260);
+
+/* ---------- camera feeds ---------- */
+var feeds = $$(".feed");
+var feedCtx = feeds.map(function(f){ return f.querySelector("canvas").getContext("2d"); });
+var feedSeeds = feeds.map(function(_,i){ return i*7.3+3.1; });
+function drawFeed(ctx, seed, t, hall, bedroom, idx){
+  var w=128,h=80;
+  ctx.fillStyle = "#04060a"; ctx.fillRect(0,0,w,h);
+  if (!bedroom){
+    var g = ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,"#0a1018"); g.addColorStop(1,"#05070c");
+    ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    if (idx===0){ // 湖岸：地平线与碎光
+      var hy = 44+Math.sin(seed)*4;
+      ctx.strokeStyle="rgba(90,130,170,.35)"; ctx.beginPath(); ctx.moveTo(0,hy); ctx.lineTo(w,hy); ctx.stroke();
+      for (var s2=0;s2<12;s2++){
+        var sx=(s2*23+t*0.02+seed*31)%w;
+        ctx.fillStyle="rgba(140,180,220,"+(0.05+0.05*Math.sin(t*0.002+s2))+")";
+        ctx.fillRect(sx, hy+4+(s2%4)*3, 6, 1);
+      }
+    } else if (idx===1){ // 前门：门框微光
+      ctx.strokeStyle="rgba(90,120,150,.5)";
+      ctx.strokeRect(46,18,36,54);
+      ctx.fillStyle="rgba(200,220,255,"+(0.03+0.02*Math.sin(t*0.001))+")";
+      ctx.fillRect(46,18,36,54);
+    } else if (idx===2){ // 车库：车影
+      ctx.fillStyle="rgba(30,40,55,.9)";
+      ctx.beginPath(); ctx.roundRect(28,40,72,22,6); ctx.fill();
+      ctx.fillRect(40,32,42,12);
+      ctx.fillStyle="rgba(10,14,20,1)";
+      ctx.beginPath(); ctx.arc(44,64,7,0,Math.PI*2); ctx.arc(86,64,7,0,Math.PI*2); ctx.fill();
+    } else if (idx===4){ // 玄关：鞋柜与黑伞
+      ctx.fillStyle="rgba(28,36,48,.9)"; ctx.fillRect(20,38,52,30);
+      ctx.strokeStyle="rgba(90,120,150,.4)"; ctx.strokeRect(20,38,52,30);
+      // 伞，在最外面
+      ctx.strokeStyle="rgba(120,150,180,.55)";
+      ctx.beginPath(); ctx.moveTo(88,66); ctx.lineTo(88,30); ctx.stroke();
+      ctx.beginPath(); ctx.arc(84,32,6,Math.PI,0,false); ctx.stroke();
+    }
+    if (idx===6){ // 通道07：画面里是一台显示器，显示器里是这个网站
+    var stage5t = stage5Enter? (t-stage5Enter) : 0;
+    ctx.fillStyle="#dfe8f2"; ctx.fillRect(8,10,w-16,h-18);
+    ctx.fillStyle="#9db8d4"; ctx.fillRect(8,10,w-16,9);
+    ctx.fillStyle="#e8eef5"; ctx.fillRect(10,22,w-20,8);
+    ctx.fillStyle="#cdd9e6"; ctx.fillRect(10,32,w-20,28);
+    ctx.fillStyle="#2a4a6e"; ctx.fillRect(13,35,36,4);
+    ctx.fillStyle="#4a86c8";
+    ctx.beginPath(); ctx.arc(w-36,38,5,0,Math.PI*2); ctx.arc(w-27,38,4,0,Math.PI*2); ctx.fill();
+    // 它在里面慢慢变大。你在外面看它，它在里面看你。
+    var grow = Math.min(1, stage5t/45000);
+    if (grow>0.02){
+      ctx.fillStyle="rgba(5,5,8,"+(0.55+grow*0.4)+")";
+      var fh=(h-30)*grow;
+      ctx.fillRect(w/2-2, 20+(h-30)-fh, Math.max(7,16*grow), fh);
+    }
+    }
+  } else {
+    ctx.fillStyle = "#020204"; ctx.fillRect(0,0,w,h);
+    for (var b=0;b<10;b++){
+      var v = Math.abs(Math.sin(t*0.001+b*1.7+seed))*(6+6*Math.sin(t*0.003+b));
+      ctx.fillStyle = "rgba(160,60,60,.8)";
+      ctx.fillRect(10+b*11, h/2-v/2, 6, Math.max(2,v));
+    }
+  }
+  if (hall){
+    var a = stage>=5 ? .8 : stage>=4 ? .5 : stage>=3 ? .3 : 0;
+    if (a>0){
+      ctx.fillStyle = "rgba(0,0,0,"+a+")";
+      ctx.beginPath();
+      ctx.ellipse(64, 66, 14+Math.sin(t*0.0007)*1.5, 34, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath(); ctx.arc(64, 26, 9, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = "rgba(80,140,220,"+(a*0.9)+")";
+      ctx.fillRect(61,24,2,2); ctx.fillRect(66,24,2,2);
+    }
+  }
+  // 噪点
+  var n = 220;
+  for (var i=0;i<n;i++){
+    ctx.fillStyle = "rgba(255,255,255,"+(Math.random()*0.05)+")";
+    ctx.fillRect(Math.random()*w, Math.random()*h, 1, 1);
+  }
+  // 同步带
+  if (Math.random()<0.02){ ctx.fillStyle="rgba(120,140,160,.08)"; ctx.fillRect(0, Math.random()*h, w, 3); }
+}
+var lastFeedDraw = 0;
+function feedLoop(t){
+  if (t - lastFeedDraw < 80) return;
+  lastFeedDraw = t;
+  feeds.forEach(function(f,i){
+    var r = f.getBoundingClientRect();
+    if (r.width===0 || r.bottom<0 || r.top>innerHeight) return;
+    drawFeed(feedCtx[i], feedSeeds[i], t, f.classList.contains("hall"), i===5, i);
+  });
+}
+
+/* ---------- clocks ---------- */
+function two(n){ return (n<10?"0":"")+n; }
+setInterval(function(){
+  var d = new Date();
+  var hh = two(d.getHours()), mm = two(d.getMinutes()), ss = two(d.getSeconds());
+  var base = hh+":"+mm+":"+ss;
+  $("#nvrClock").textContent = base;
+  $("#chatClock").textContent = base;
+  $$(".feed .clock").forEach(function(c,i){
+    // 卧室那台的钟有点不对。它显示的时间，是你睡着的时间。
+    if (i===5){ c.textContent = "07:06"; return; }
+    c.textContent = hh+":"+mm;
+  });
+  // 计数面板
+  var el = Math.floor((performance.now()-start)/1000);
+  $("#cTime").textContent = two(Math.floor(el/60))+":"+two(el%60);
+  $("#cScroll").textContent = (raw*38).toFixed(1)+" 米";
+  $("#cMouse").textContent = mouseMoves+" 次";
+  $("#cIdle").textContent = idleMax.toFixed(1)+" 秒";
+  // 真实数据。页面真的能看见这些——这才是最吓人的部分。
+  $("#cClock").textContent = hh+":"+mm;
+  $("#cClockNote").textContent = (d.getHours()>=22 || d.getHours()<6)? "您还没睡。":"大白天看这个，胆子不小。";
+  $("#cScreen").textContent = screen.width+"×"+screen.height;
+  $("#cLang").textContent = navigator.language || "—";
+  $("#cAway").textContent = awayCount+" 次";
+}, 1000);
+
+/* ---------- 卧室的"转录" ---------- */
+var bedLines = ["（呼吸声）","（翻身）","（很低的）Meine Liebe…","（呼吸，变深）","（别醒。Schatz。）"];
+var bedIdx = 0;
+setInterval(function(){
+  var el = $("#bedVoice");
+  if (!el || stage<4) return;
+  el.textContent = bedLines[bedIdx++ % bedLines.length];
+}, 6000);
+
+/* ---------- 标签页：离开是会被数出来的 ---------- */
+document.addEventListener("visibilitychange", function(){
+  if (document.hidden){
+    if (maxStage>=2){ document.title = "别走。"; awayAt = performance.now(); }
+  } else {
+    if (maxStage>=2 && awayAt){
+      var secs = Math.max(1, Math.round((performance.now()-awayAt)/1000));
+      awayCount++;
+      document.title = titles[stage];
+      queueChat("您离开了 "+secs+" 秒。我数着呢。");
+      // 走得够久还敢回来——它会离你近一点
+      if (maxStage>=4 && secs>=20){
+        setTimeout(function(){ doFlash(true); showWhisper("回来了。"); }, 900);
+      }
+    }
+    awayAt = 0;
+  }
+});
+/* 在深处想关掉页面时，它会开口挽留 */
+addEventListener("beforeunload", function(e){
+  if (maxStage>=4 && !(window.__ksg && window.__ksg.disarmed)){ e.preventDefault(); e.returnValue = ""; return ""; }
+});
+
+/* ---------- safe line repetition ---------- */
+var safeLines = ["您很安全。您很安全。您很安全。","您很安全。您很安全。您很安全。您很安全。您很安全。","您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。","您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。","您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。您很安全。","不可能不安全。"];
+setInterval(function(){
+  var el = $("#safeLine");
+  if (el) el.textContent = safeLines[Math.min(stage, safeLines.length-1)];
+}, 6000);
+
+/* ---------- audio ---------- */
+var audio = { ctx:null, master:null, rain:null, heart:null, drone:null, on:false, hbTimer:null };
+function buildAudio(){
+  var C = new (window.AudioContext||window.webkitAudioContext)();
+  audio.ctx = C;
+  audio.master = C.createGain(); audio.master.gain.value = 0; audio.master.connect(C.destination);
+  // 雨：噪声 → 低通
+  var len = C.sampleRate*2, buf = C.createBuffer(1,len,C.sampleRate), d = buf.getChannelData(0);
+  for (var i=0;i<len;i++) d[i] = Math.random()*2-1;
+  var src = C.createBufferSource(); src.buffer = buf; src.loop = true;
+  var lp = C.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=850; lp.Q.value=.4;
+  var rg = C.createGain(); rg.gain.value = .12;
+  src.connect(lp); lp.connect(rg); rg.connect(audio.master); src.start();
+  audio.rain = rg;
+  // 心跳：正弦低频，双跳包络
+  audio.heart = C.createGain(); audio.heart.gain.value = 0; audio.heart.connect(audio.master);
+  // 低鸣：双锯齿
+  var o1=C.createOscillator(), o2=C.createOscillator();
+  o1.type="sawtooth"; o2.type="sawtooth"; o1.frequency.value=55; o2.frequency.value=55.6;
+  var dlp=C.createBiquadFilter(); dlp.type="lowpass"; dlp.frequency.value=180;
+  var dg=C.createGain(); dg.gain.value=.05;
+  o1.connect(dlp); o2.connect(dlp); dlp.connect(dg); dg.connect(audio.master);
+  o1.start(); o2.start();
+  audio.drone = dg;
+  // 呼吸。有人在很近的地方呼吸。带通噪声做的，别问是谁的肺。
+  var bsrc = C.createBufferSource(); bsrc.buffer = buf; bsrc.loop = true;
+  var bp = C.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=420; bp.Q.value=1.2;
+  var bg = C.createGain(); bg.gain.value = 0;
+  bsrc.connect(bp); bp.connect(bg); bg.connect(audio.master); bsrc.start();
+  audio.breath = bg;
+}
+function heartbeatOnce(){
+  var C=audio.ctx, g=audio.heart, t=C.currentTime;
+  [0,0.19].forEach(function(off,i){
+    var o=C.createOscillator(), og=C.createGain();
+    o.type="sine"; o.frequency.value= i? 48:55;
+    o.connect(og); og.connect(audio.master);
+    og.gain.setValueAtTime(0,t+off);
+    og.gain.linearRampToValueAtTime(i? .28:.4, t+off+0.02);
+    og.gain.exponentialRampToValueAtTime(0.001, t+off+0.16);
+    o.start(t+off); o.stop(t+off+0.2);
+  });
+}
+function startHeart(){ if(audio.hbTimer) return; audio.hbTimer = setInterval(heartbeatOnce, 940); }
+function stopHeart(){ clearInterval(audio.hbTimer); audio.hbTimer=null; }
+function setAudioMix(){
+  if(!audio.on) return;
+  var t = audio.ctx.currentTime, rainG = stage<=2? .12 : stage<=3? .07 : .035, heartG = stage>=3? 1:0, droneG = stage>=4? 1:0;
+  audio.rain.gain.linearRampToValueAtTime(rainG, t+1.5);
+  audio.heart.gain.linearRampToValueAtTime(heartG, t+1.5);
+  audio.drone.gain.linearRampToValueAtTime(0.05*droneG, t+2);
+  if (stage>=3) startHeart(); else stopHeart();
+  if (stage>=5) startBreath(); else stopBreath();
+}
+/* 吸——屏——呼。4.2 秒一轮，比正常人慢一点。 */
+function startBreath(){
+  if (audio.brTimer) return;
+  audio.brTimer = setInterval(function(){
+    if (!audio.on || stage<5) return;
+    var C=audio.ctx, t=C.currentTime, g=audio.breath.gain;
+    g.cancelScheduledValues(t); g.setValueAtTime(g.value, t);
+    g.linearRampToValueAtTime(0.055, t+1.3);
+    g.linearRampToValueAtTime(0.018, t+2.1);
+    g.linearRampToValueAtTime(0.0,   t+3.9);
+  }, 4200);
+}
+function stopBreath(){
+  clearInterval(audio.brTimer); audio.brTimer = null;
+  if (audio.breath) audio.breath.gain.value = 0;
+}
+var sndBtn = $("#sndBtn");
+sndBtn.addEventListener("click", function(){
+  if(!audio.ctx) buildAudio();
+  if (audio.ctx.state === "suspended") audio.ctx.resume();
+  audio.on = !audio.on;
+  var t = audio.ctx.currentTime;
+  audio.master.gain.linearRampToValueAtTime(audio.on? 1:0, t+0.8);
+  if (audio.on){ setAudioMix(); sndBtn.textContent = stage>=4? "♪ 关掉它也没用，但可以关" : "♪ 静音"; }
+  else { stopHeart(); sndBtn.textContent = "♪ 启用环境音（雨）"; }
+});
+
+/* ---------- flash frames ---------- */
+var flash = $("#flash");
+function doFlash(close){
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  flash.classList.toggle("close", !!close);
+  flash.classList.remove("on"); void flash.offsetWidth; flash.classList.add("on");
+  if (close){
+    lockCursor(1200);
+    thump();
+  }
+}
+function lockCursor(ms){ cursorLocked = performance.now() + ms; }
+/* 离得很近的那一下，配一声很低的鼓点 */
+function thump(){
+  if(!audio.ctx || !audio.on) return;
+  var C=audio.ctx, t=C.currentTime, o=C.createOscillator(), g=C.createGain();
+  o.type="sine"; o.frequency.setValueAtTime(52,t); o.frequency.exponentialRampToValueAtTime(28,t+0.35);
+  o.connect(g); g.connect(audio.master);
+  g.gain.setValueAtTime(0.5,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.42);
+  o.start(t); o.stop(t+0.45);
+}
+
+/* ---------- whisper near cursor ---------- */
+var whisper = $("#whisper");
+var whispers = ["别停。","继续。","往下。","看着我。","Bleib hier."];
+function showWhisper(txt){
+  whisper.textContent = txt;
+  whisper.style.left = (mouse.x+18)+"px";
+  whisper.style.top = (mouse.y+18)+"px";
+  whisper.classList.add("on");
+  setTimeout(function(){ whisper.classList.remove("on"); }, 2600);
+}
+
+/* ---------- mouse ---------- */
+var tracker = $("#tracker"), mouse = {x:innerWidth/2, y:innerHeight/2};
+addEventListener("mousemove", function(e){
+  mouse.x=e.clientX; mouse.y=e.clientY;
+  mouseMoves++;
+  lastMove = performance.now();
+  // 红点：你的光标，现在也是一枚定位
+  if (performance.now() > cursorLocked){
+    tracker.style.transform = "translate("+mouse.x+"px,"+mouse.y+"px)";
+  }
+  // 有人反复想把光标逃向浏览器上方
+  if (e.clientY < 40 && performance.now()-lastTopTry > 2200){
+    topTries++; lastTopTry = performance.now();
+    if (topTries===3 && maxStage>=4) showWhisper("上面没有出口。");
+  }
+});
+setInterval(function(){
+  var idle = (performance.now()-lastMove)/1000;
+  if (idle > idleMax) idleMax = idle;
+  if (stage>=3 && idle>7 && Math.random()<0.5 && !whisper.classList.contains("on")){
+    showWhisper(whispers[Math.floor(Math.random()*whispers.length)]);
+    lastMove = performance.now();
+  }
+}, 2500);
+
+/* ---------- back-scroll detection ---------- */
+addEventListener("scroll", function(){
+  var y = window.scrollY;
+  if (y < lastY - 240 && maxStage>=2){
+    backCount++;
+    if (backCount===1) queueChat("往回走是没用的，Schatz。不过您回头看的样子，很好看。");
+  }
+  lastY = y;
+});
+
+/* ---------- chat ---------- */
+var chatBtn=$("#chatBtn"), chatPanel=$("#chatPanel"), chatMsg=$("#chatMsg"), chatDot=chatBtn.querySelector(".dot");
+var chatQueue=[], chatStageLines=[
+  "您好，这里是 KSG 在线支持。有什么可以帮您？",
+  "您已经看了一会儿了。不着急。我等得起。",
+  "您的鼠标在犹豫。深呼吸。往下走反而安全。",
+  "快到真正的部分了。别怕。是我。",
+  "我在您身后。——这句话在别的公司是承诺。在我这里是位置说明。",
+  "还剩最后一道门。您可以开的。您只是会不想开。"
+];
+var chatIdx = 0, chatOpen=false;
+function queueChat(t){ chatQueue.push(t); chatDot.style.opacity=1; chatBtn.classList.add("hasmsg"); }
+chatBtn.addEventListener("click", function(){
+  chatOpen=!chatOpen;
+  chatPanel.classList.toggle("open", chatOpen);
+  if (chatOpen){
+    var say = null;
+    if (chatQueue.length){ say = chatQueue.shift(); if(!chatQueue.length){chatDot.style.opacity=0;chatBtn.classList.remove("hasmsg");} }
+    else if (chatIdx < chatStageLines.length){ say = chatStageLines[Math.min(chatIdx, stage)]; chatIdx++; }
+    if (say !== null){
+      // 它先"正在输入"。每次都是秒回，因为它根本没在忙别的。
+      chatMsg.classList.add("typing");
+      chatMsg.textContent = "K. 正在输入…";
+      setTimeout(function(){ chatMsg.classList.remove("typing"); chatMsg.textContent = say; }, 1100);
+    }
+  }
+});
+$("#chatMore").addEventListener("click", function(){
+  var pool = chatStageLines.slice(Math.max(0,stage-1), stage+1);
+  chatMsg.textContent = pool.length? pool[Math.floor(Math.random()*pool.length)] : "……";
+});
+
+/* ---------- slider trap ---------- */
+var fs=$("#freeSlider"), fv=$("#sliderVal"), fn=$("#sliderNote");
+fs.addEventListener("input", function(){
+  fs.value = 0; fv.textContent = "0%";
+  fn.textContent = "已重新校准。自由度：0%（安全值）。此操作不可逆。没有逆。";
+  fn.classList.add("on");
+});
+fs.addEventListener("change", function(){ fs.value = 0; fv.textContent = "0%"; });
+
+/* ---------- door ---------- */
+var door=$("#theDoor"), chain=$("#theChain"), doorBtn=$("#doorBtn"), stayBtn=$("#stayBtn"), doorSay=$("#doorSay");
+var doorState = 0;
+/* 链条：一节一节，都是他亲手挂上去的 */
+(function buildChain(){
+  if (!chain) return;
+  var step = 100/16;
+  for (var i=0;i<16;i++){
+    var l=document.createElement("i");
+    l.className="link";
+    l.style.left=(i*step)+"%";
+    l.style.top=(i%2? 9:4)+"px";
+    chain.appendChild(l);
+  }
+  var pad=document.createElement("b");
+  pad.className="pad";
+  chain.appendChild(pad);
+})();
+var doorLines = [
+  "门链。加了一道。您忘了吗？",
+  "是我加的。您睡着的时候。",
+  "再用力也没用。它比誓言结实。"
+];
+doorBtn.addEventListener("click", function(){
+  if (doorState < 3){
+    door.classList.add("opened");
+    doorSay.textContent = doorLines[Math.min(doorState,2)];
+    doorSay.classList.add("on");
+    if (audio.on && audio.ctx){ // 门撞到链条
+      var C=audio.ctx,t=C.currentTime,o=C.createOscillator(),g=C.createGain();
+      o.type="square"; o.frequency.value=70; o.connect(g); g.connect(audio.master);
+      g.gain.setValueAtTime(.3,t); g.gain.exponentialRampToValueAtTime(.001,t+.12);
+      o.start(t); o.stop(t+.13);
+    }
+    doorState++;
+    if (doorState>=3){
+      doorBtn.style.display="none";
+      stayBtn.style.display="";
+      doorSay.textContent = "您只剩一个选项了。您早就只剩一个选项了。";
+    }
+  }
+});
+stayBtn.addEventListener("click", function(){
+  if (finished) return; finished = true;
+  stage = 5; document.body.dataset.stage="5";
+  var f=$("#fade"); f.classList.add("on");
+  var lines = [
+    "晚安，Schatz。",
+    "明天早饭见。",
+    "两个煎蛋。一个全熟归您，一个溏心归我。",
+    "锁我来反。灯我来关。",
+    "您夜里只管做梦。",
+    "梦外面有我。",
+    "—— KSG · 从不打烊"
+  ];
+  var ft=$("#finalText"), i=0;
+  function next(){
+    if (i<lines.length){
+      var p=document.createElement("p");
+      if(i===lines.length-1) p.style.cssText="font-size:.8rem;letter-spacing:.5em;color:#5a4a44";
+      p.textContent=lines[i++]; ft.appendChild(p);
+      setTimeout(next, i<=2? 2100:1700);
+    } else {
+      var p=document.createElement("p");
+      p.style.cssText="font-size:.78rem;letter-spacing:.4em;color:#3a2e2a;margin-top:30px";
+      p.textContent="P.S. 外面还在下雨。您听。";
+      ft.appendChild(p);
+      document.title = "晚安。";
+      // 数完最后一个字，它放你"醒来"。
+      setTimeout(doLoopReset, 6000);
+    }
+  }
+  setTimeout(next, 3200);
+});
+
+/* ---------- 醒来 ---------- */
+function doLoopReset(){
+  loopCount++;
+  finished = false;
+  var f=$("#fade"); f.classList.remove("on");
+  setTimeout(function(){ $("#finalText").innerHTML=""; }, 1400);
+  // 世界被摆回原位。你以为重来的是你。
+  seen = 0; stage = 0; maxStage = 0; thresholdCrossed = {}; stage5Enter = 0;
+  document.body.classList.remove("ruined","tracked");
+  document.body.dataset.stage = "0";
+  document.title = "把安全感，做成一项工程。（又一次）";
+  setFavicon(0);
+  $("#navCta").textContent = navCtaLabels[0];
+  $$("nav a.nl").forEach(function(a){
+    if(a.classList.contains("navcta")) return;
+    var orig = navOriginals[parseInt(a.dataset.idx,10)];
+    if (orig) a.textContent = orig;
+  });
+  corruptEls.forEach(function(el){ if(el.dataset.orig){ el.innerHTML = el.dataset.orig; el._dirty = false; } });
+  door.classList.remove("opened");
+  doorState = 0; doorSay.classList.remove("on"); doorSay.textContent = "";
+  doorBtn.style.display = ""; stayBtn.style.display = "none";
+  stopHeart(); stopBreath();
+  // 瞬移回顶。smooth 的"醒来"会让世界追上你。
+  window.scrollTo({top:0, left:0, behavior:"instant"});
+  if (document.documentElement.style.scrollBehavior !== undefined){
+    document.documentElement.style.scrollBehavior = "auto";
+    setTimeout(function(){ document.documentElement.style.scrollBehavior = ""; }, 80);
+  }
+  document.querySelector("#hero .eyebrow").textContent = "SIE SIND ZURÜCK · 第 "+(loopCount+1)+" 次访客 · 你回来了";
+  setTimeout(function(){ queueChat("早安，Schatz。"); }, 2200);
+  setTimeout(function(){ queueChat("做了个好长的梦吧？"); }, 4600);
+  setTimeout(function(){ queueChat("从你第一次点开这一页起，就没有醒过。"); }, 7600);
+}
+window.__ksg = { reset: doLoopReset };  // 留给唯一的访客的一把钥匙
+
+/* ---------- logo easter egg ---------- */
+var logoClicks=0;
+$("#logoBtn").addEventListener("click", function(){
+  if (++logoClicks===5){ queueChat("Sag mir, Schatz——您在找什么？所有东西都已经在您身上了。"); }
+});
+
+/* ---------- nav CTA corruption ---------- */
+var navCtaLabels = ["预约咨询","保持在线","保持在线","别走","回来","回家"];
+var navLinkTables = [ /* stage 3 */ ["看守","凝视","哭声","牢笼","无期"],
+                     /* stage 4 */ ["看守","凝视","哭声","牢笼","无期"],
+                     /* stage 5 */ ["看守","凝视","哭声","牢笼","无处可去"] ];
+
+/* ---------- main loop ---------- */
+var reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+var stageSections = $$("[data-stage]").filter(function(el){ return el !== document.body; });
+var navOriginals = {};
+$$("nav a.nl").forEach(function(a,i){ if(a.classList.contains("navcta")) return; navOriginals[i] = a.textContent; a.dataset.idx = i; });
+
+function detectStage(){
+  var mid = window.scrollY + innerHeight*0.5;
+  var s = 0;
+  for (var i=0;i<stageSections.length;i++){
+    var el = stageSections[i];
+    var top = el.offsetTop, bottom = top + el.offsetHeight;
+    if (mid >= top && mid < bottom){ s = parseInt(el.dataset.stage,10)||0; break; }
+    if (mid >= top) s = Math.max(s, parseInt(el.dataset.stage,10)||0);
+  }
+  return s;
+}
+
+function loop(t){
+  // progress
+  var max = document.documentElement.scrollHeight - innerHeight;
+  raw = max>0? Math.min(1, window.scrollY/max) : 0;
+  if (raw > seen) seen = raw;
+  var p = seen;
+
+  // stage —— 只升不降。上下滚动不构成离开。
+  var s = Math.max(detectStage(), stage);
+  if (s !== stage){
+    stage = s;
+    if (s > maxStage){
+      maxStage = s;
+      // 远处的剪影先来，近处的后来。离得越深，它离你越近。
+      if (s>=3 && !thresholdCrossed[s]){ thresholdCrossed[s]=true; doFlash(s>=4); }
+      queueChat(chatStageLines[s]);
+      if (s===5) stage5Enter = performance.now();
+    }
+    document.body.dataset.stage = s;
+    if (s>=3) document.body.classList.add("ruined");
+    if (s>=4 && matchMedia("(pointer:fine)").matches) document.body.classList.add("tracked");
+    $("#trackerTag").textContent = s>=5? "目标 · 001 · 永远安全" : "目标 · 001 · 安全";
+    document.title = titles[s];
+    if (s>=4) setFavicon(1);
+    $("#navCta").textContent = navCtaLabels[s];
+    if (s>=3){
+      var table = navLinkTables[Math.min(s,5)-3];
+      $$("nav a.nl").forEach(function(a){
+        if(a.classList.contains("navcta")) return;
+        a.textContent = table[parseInt(a.dataset.idx,10)] || a.textContent;
+      });
+    }
+    setAudioMix();
+  }
+  // css var
+  document.documentElement.style.setProperty("--corr", Math.max(0,(p-0.3)/0.7).toFixed(3));
+
+  feedLoop(t);
+  requestAnimationFrame(loop);
+}
+
+/* ---------- idle heartbeat of the "hr" counter ---------- */
+setInterval(function(){
+  var el=$("#cHr"); if(!el) return;
+  var base = 72;
+  if (stage>=4) base = 66 + Math.round(Math.sin(performance.now()/4000)*3);
+  el.textContent = base;
+}, 1200);
+
+/* ---------- init ---------- */
+collectCorrupt();
+window.addEventListener("resize", collectCorrupt);
+
+/* ---------- 访客须知 ---------- */
+var gate = $("#gate");
+$("#gateEnter").addEventListener("click", function(){
+  gate.classList.add("off");
+  document.body.classList.remove("gated");
+  setTimeout(function(){ if (gate.parentNode) gate.parentNode.removeChild(gate); }, 1300);
+});
+$("#gateLeave").addEventListener("click", function(){
+  $("#gateSay").textContent = "太晚了。Schluss。";
+  this.style.display = "none";
+});
+
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
